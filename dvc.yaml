@@ -1,0 +1,557 @@
+stages:
+  create_patches_with_pose:
+    cmd: python src/create_patches_with_pose.py data_disk/dvc_data/02_matched_images
+      data_disk/dvc_data/randwijk_row_4_patched_images
+    deps:
+    - data_disk/dvc_data/02_matched_images
+    - src/create_patches_with_pose.py
+    params:
+    - create_patches_with_pose.patch_width
+    - create_patches_with_pose.patch_height
+    outs:
+    - data_disk/dvc_data/randwijk_row_4_patched_images
+  render_splat_from_ply:
+    cmd: docker restart gsplat_renderer && docker exec -w $PWD -it gsplat_renderer python3 $PWD/src/render_splat_from_ply.py
+      $PWD/data_disk/dvc_data/03_gaussian_splat/per_tree_gs $PWD/data_disk/dvc_data/randwijk_row_4_images_from_splat
+      $PWD/data_disk/dvc_data/randwijk_row_4_depth_from_splat
+    deps:
+    - data_disk/dvc_data/03_gaussian_splat/per_tree_gs
+    - src/render_splat_from_ply.py
+    outs:
+    - data_disk/dvc_data/randwijk_row_4_images_from_splat
+    - data_disk/dvc_data/randwijk_row_4_depth_from_splat
+    params:
+    - render_splat_from_ply.sh_degrees
+    - render_splat_from_ply.image_width
+    - render_splat_from_ply.image_height
+    - render_splat_from_ply.focal_length_x
+    - render_splat_from_ply.focal_length_y
+    - render_splat_from_ply.principal_point_x
+    - render_splat_from_ply.principal_point_y
+    - render_splat_from_ply.depth_render_mode
+    - render_splat_from_ply.eps2d
+    - render_splat_from_ply.packed
+    - render_splat_from_ply.sparse_grad
+    - render_splat_from_ply.rasterize_mode
+    - render_splat_from_ply.center_distance
+    - render_splat_from_ply.height_steps
+    - render_splat_from_ply.yaw_steps
+    - render_splat_from_ply.pitch_steps
+    - render_splat_from_ply.roll_steps
+    - render_splat_from_ply.background_depth
+  convert_depth_data:
+    cmd: python src/convert_depth_data.py data_disk/dvc_data/randwijk_row_4_depth_from_splat
+      data_disk/dvc_data/randwijk_row_4_images_from_splat data_disk/dvc_data/randwijk_row_4_point_cloud_from_splat
+      data_disk/dvc_data/randwijk_row_4_xyz_from_splat
+    deps:
+    - data_disk/dvc_data/randwijk_row_4_depth_from_splat
+    - data_disk/dvc_data/randwijk_row_4_images_from_splat
+    - src/convert_depth_data.py
+    params:
+    - convert_depth_data.max_background_depth
+    - convert_depth_data.xyz_img_z_min
+    - convert_depth_data.xyz_img_z_max
+    - convert_depth_data.xyz_img_x_min
+    - convert_depth_data.xyz_img_x_max
+    - convert_depth_data.xyz_img_y_min
+    - convert_depth_data.xyz_img_y_max
+    outs:
+    - data_disk/dvc_data/randwijk_row_4_xyz_from_splat
+    - data_disk/dvc_data/randwijk_row_4_point_cloud_from_splat
+  render_real_depth:
+    cmd: docker restart gsplat_renderer && docker exec -w $PWD -it gsplat_renderer python3 $PWD/src/render_real_depth.py
+      $PWD/data_disk/dvc_data/03_gaussian_splat/complete_gs $PWD/data_disk/dvc_data/03_gaussian_splat/per_tree_gs
+      $PWD/data_disk/dvc_data/randwijk_row_4_patched_images $PWD/data_disk/dvc_data/randwijk_row_4_patched_images_tree
+      $PWD/data_disk/dvc_data/randwijk_row_4_patched_depth_images_tree
+    deps:
+    - data_disk/dvc_data/03_gaussian_splat/complete_gs
+    - data_disk/dvc_data/03_gaussian_splat/per_tree_gs
+    - data_disk/dvc_data/randwijk_row_4_patched_images
+    - src/render_real_depth.py
+    outs:
+    - data_disk/dvc_data/randwijk_row_4_patched_images_tree
+    - data_disk/dvc_data/randwijk_row_4_patched_depth_images_tree
+    params:
+    - render_real_depth.sh_degrees
+    - render_real_depth.depth_render_mode
+    - render_real_depth.eps2d
+    - render_real_depth.packed
+    - render_real_depth.sparse_grad
+    - render_real_depth.rasterize_mode
+    - render_real_depth.background_depth
+    - tree_bounding_boxes
+  convert_real_depth_data:
+    cmd: python src/convert_depth_data.py data_disk/dvc_data/randwijk_row_4_patched_depth_images_tree
+      data_disk/dvc_data/randwijk_row_4_patched_images_tree data_disk/dvc_data/randwijk_row_4_patched_real_point_cloud
+      data_disk/dvc_data/randwijk_row_4_patched_real_xyz
+    deps:
+    - data_disk/dvc_data/randwijk_row_4_patched_depth_images_tree
+    - data_disk/dvc_data/randwijk_row_4_patched_images_tree
+    - src/convert_depth_data.py
+    params:
+    - convert_depth_data.max_background_depth
+    - convert_depth_data.xyz_img_z_min
+    - convert_depth_data.xyz_img_z_max
+    - convert_depth_data.xyz_img_x_min
+    - convert_depth_data.xyz_img_x_max
+    - convert_depth_data.xyz_img_y_min
+    - convert_depth_data.xyz_img_y_max
+    outs:
+    - data_disk/dvc_data/randwijk_row_4_patched_real_xyz
+    - data_disk/dvc_data/randwijk_row_4_patched_real_point_cloud
+  convert_randwijk_data_to_fresh:
+    cmd: python src/convert_splat_randwijk_data_to_fresh.py data_disk/dvc_data/real_randwijk_papple data_disk/dvc_data/randwijk_row_4_images_from_splat
+      data_disk/dvc_data/randwijk_row_4_depth_from_splat data_disk/dvc_data/04_annotations
+      data_disk/dvc_data/randwijk_papple_splat
+    deps:
+    - data_disk/dvc_data/real_randwijk_papple
+    - data_disk/dvc_data/randwijk_row_4_images_from_splat
+    - data_disk/dvc_data/randwijk_row_4_depth_from_splat
+    - data_disk/dvc_data/04_annotations
+    - src/convert_splat_randwijk_data_to_fresh.py
+    params:
+    - convert_randwijk_data_to_fresh.min_mask_size
+    - convert_randwijk_data_to_fresh.min_view_fraction
+    - convert_randwijk_data_to_fresh.cloud_cloud_dist
+    - convert_randwijk_data_to_fresh.train_trees
+    - convert_randwijk_data_to_fresh.val_trees
+    - convert_randwijk_data_to_fresh.test_trees
+    - convert_splat_randwijk_data_to_fresh.real_fraction
+    - convert_depth_data.max_background_depth
+    - convert_depth_data.color_threshold
+    outs:
+    - data_disk/dvc_data/randwijk_papple_splat
+  convert_real_randwijk_data_to_fresh:
+    cmd: python src/convert_randwijk_data_to_fresh.py data_disk/dvc_data/randwijk_row_4_patched_images_tree
+      data_disk/dvc_data/randwijk_row_4_patched_depth_images_tree data_disk/dvc_data/04_annotations
+      data_disk/dvc_data/real_randwijk_papple
+    deps:
+    - data_disk/dvc_data/randwijk_row_4_patched_images_tree
+    - data_disk/dvc_data/randwijk_row_4_patched_depth_images_tree
+    - data_disk/dvc_data/04_annotations
+    - src/convert_randwijk_data_to_fresh.py
+    params:
+    - convert_randwijk_data_to_fresh.min_mask_size
+    - convert_randwijk_data_to_fresh.min_view_fraction
+    - convert_randwijk_data_to_fresh.cloud_cloud_dist
+    - convert_randwijk_data_to_fresh.train_trees
+    - convert_randwijk_data_to_fresh.val_trees
+    - convert_randwijk_data_to_fresh.test_trees
+    - convert_depth_data.max_background_depth
+    - convert_depth_data.color_threshold
+    outs:
+    - data_disk/dvc_data/real_randwijk_papple
+  randwijk_papple_data_preparation:
+    cmd: docker restart freshnet && docker exec -w $PWD -it freshnet python3 $PWD/src/freshnet/tools/create_data.py
+      papple --root-path $PWD/data_disk/dvc_data/ --out-dir /randwijk_papple_splat_split
+      --extra-tag papple --workers 24 --split-dir randwijk_papple_splat
+    deps:
+    - data_disk/dvc_data/randwijk_papple_splat
+    - src/freshnet/tools/create_data.py
+    outs:
+    - data_disk/dvc_data/randwijk_papple_splat_split
+  real_randwijk_papple_data_preparation:
+    cmd: docker restart freshnet && docker exec -w $PWD -it freshnet python3 $PWD/src/freshnet/tools/create_data.py
+      papple --root-path $PWD/data_disk/dvc_data/ --out-dir /real_randwijk_papple_split
+      --extra-tag papple --workers 24 --split-dir real_randwijk_papple
+    deps:
+    - data_disk/dvc_data/real_randwijk_papple
+    - src/freshnet/tools/create_data.py
+    outs:
+    - data_disk/dvc_data/real_randwijk_papple_split
+  randwijk_papple_train:
+    cmd: docker restart freshnet && docker exec -e DVC_CHECKPOINT=$DVC_CHECKPOINT -w $PWD -it freshnet python3
+      $PWD/src/freshnet/tools/train.py $PWD/training_configs/randwijk-ff_stem_direction.py
+    deps:
+    - data_disk/dvc_data/randwijk_papple_splat_split
+    - data_disk/dvc_data/randwijk_papple_splat
+    - src/freshnet/tools/train.py
+    params:
+    - training_configs/randwijk-ff_stem_direction.py:
+      - n_points
+      - optimizer_lr
+      - optimizer_weight_decay
+      - work_dir
+      - evaluation_interval
+      - data_root
+      - data_root_processed
+      - data_train_times
+      - runner_max_epochs
+      - bbox_loss_weight
+      - angle_loss_weight
+      - score_thr
+    outs:
+    - models/randwijk_freshnet_model
+    - dvclive/randwijk_freshnet_model
+  real_randwijk_papple_train:
+    cmd: docker restart freshnet && docker exec -e DVC_CHECKPOINT=$DVC_CHECKPOINT -w $PWD -it freshnet python3
+      $PWD/src/freshnet/tools/train.py $PWD/training_configs/real_randwijk-ff_stem_direction.py
+    deps:
+    - data_disk/dvc_data/real_randwijk_papple_split
+    - data_disk/dvc_data/real_randwijk_papple
+    - src/freshnet/tools/train.py
+    params:
+    - training_configs/real_randwijk-ff_stem_direction.py:
+      - n_points
+      - optimizer_lr
+      - optimizer_weight_decay
+      - work_dir
+      - evaluation_interval
+      - data_root
+      - data_root_processed
+      - data_train_times
+      - runner_max_epochs
+      - bbox_loss_weight
+      - angle_loss_weight
+      - score_thr
+    outs:
+    - models/real_randwijk_freshnet_model
+    - dvclive/real_randwijk_freshnet_model
+  real_randwijk_papple_create_test_labels:
+    cmd: python src/test_labels_randwijk_data_to_fresh.py false data_disk/dvc_data/real_randwijk_papple data_disk/dvc_data/randwijk_row_4_patched_images_tree
+      data_disk/dvc_data/randwijk_row_4_patched_depth_images_tree data_disk/dvc_data/04_annotations
+      data_disk/dvc_data/real_randwijk_papple_test_labels
+    deps:
+    - data_disk/dvc_data/real_randwijk_papple
+    - data_disk/dvc_data/randwijk_row_4_patched_images_tree
+    - data_disk/dvc_data/randwijk_row_4_patched_depth_images_tree
+    - data_disk/dvc_data/04_annotations
+    - src/test_labels_randwijk_data_to_fresh.py
+    params:
+    - convert_randwijk_data_to_fresh.cloud_cloud_dist
+    - convert_randwijk_data_to_fresh.train_trees
+    - convert_randwijk_data_to_fresh.val_trees
+    - convert_randwijk_data_to_fresh.test_trees
+    - convert_depth_data.max_background_depth
+    - convert_depth_data.color_threshold
+    outs:
+    - data_disk/dvc_data/real_randwijk_papple_test_labels
+  randwijk_papple_create_test_labels:
+    cmd: python src/test_labels_randwijk_data_to_fresh.py true data_disk/dvc_data/randwijk_papple_splat data_disk/dvc_data/randwijk_row_4_images_from_splat
+      data_disk/dvc_data/randwijk_row_4_depth_from_splat data_disk/dvc_data/04_annotations
+      data_disk/dvc_data/randwijk_papple_test_labels
+    deps:
+    - data_disk/dvc_data/randwijk_papple_splat
+    - data_disk/dvc_data/randwijk_row_4_images_from_splat
+    - data_disk/dvc_data/randwijk_row_4_depth_from_splat
+    - data_disk/dvc_data/04_annotations
+    - src/test_labels_randwijk_data_to_fresh.py
+    params:
+    - convert_randwijk_data_to_fresh.cloud_cloud_dist
+    - convert_randwijk_data_to_fresh.train_trees
+    - convert_randwijk_data_to_fresh.val_trees
+    - convert_randwijk_data_to_fresh.test_trees
+    outs:
+    - data_disk/dvc_data/randwijk_papple_test_labels
+  randwijk_papple_val_vis:
+    cmd: docker restart freshnet && docker exec -e DVC_CHECKPOINT=$DVC_CHECKPOINT -w $PWD -it freshnet python3
+      $PWD/src/freshnet/tools/val_visible.py $PWD/training_configs/randwijk-ff_stem_direction.py
+      $PWD/models/randwijk_freshnet_model/latest.pth --eval mAP --out $PWD/results/evaluation/randwijk_freshnet_model/results.pkl --test_label_dir $PWD/data_disk/dvc_data/randwijk_papple_test_labels
+    deps:
+    - data_disk/dvc_data/randwijk_papple_splat_split
+    - data_disk/dvc_data/randwijk_papple_splat
+    - data_disk/dvc_data/randwijk_papple_test_labels
+    - models/randwijk_freshnet_model
+    - src/freshnet/tools/val_visible.py
+    params:
+    - training_configs/randwijk-ff_stem_direction.py:
+      - n_points
+      - optimizer_lr
+      - optimizer_weight_decay
+      - work_dir
+      - evaluation_interval
+      - data_root
+      - data_root_processed
+      - data_train_times
+      - runner_max_epochs
+      - bbox_loss_weight
+      - angle_loss_weight
+      - score_thr
+      - test_visibility_values
+    outs:
+    - results/evaluation/randwijk_freshnet_model
+  real_randwijk_papple_val_vis:
+    cmd: docker restart freshnet && docker exec -e DVC_CHECKPOINT=$DVC_CHECKPOINT -w $PWD -it freshnet python3
+      $PWD/src/freshnet/tools/val_visible.py $PWD/training_configs/real_randwijk-ff_stem_direction.py
+      $PWD/models/real_randwijk_freshnet_model/latest.pth --eval mAP --out $PWD/results/evaluation/real_randwijk_freshnet_model/results.pkl --test_label_dir $PWD/data_disk/dvc_data/real_randwijk_papple_test_labels
+    deps:
+    - data_disk/dvc_data/real_randwijk_papple_split
+    - data_disk/dvc_data/real_randwijk_papple
+    - data_disk/dvc_data/real_randwijk_papple_test_labels
+    - models/real_randwijk_freshnet_model
+    - src/freshnet/tools/val_visible.py
+    params:
+    - training_configs/real_randwijk-ff_stem_direction.py:
+      - n_points
+      - optimizer_lr
+      - optimizer_weight_decay
+      - work_dir
+      - evaluation_interval
+      - data_root
+      - data_root_processed
+      - data_train_times
+      - runner_max_epochs
+      - bbox_loss_weight
+      - angle_loss_weight
+      - score_thr
+      - test_nms_pre
+      - test_iou_thr
+      - test_visibility_values
+    outs:
+    - results/evaluation/real_randwijk_freshnet_model
+  randwijk_papple_metrics:
+    cmd: python3 src/compute_metrics.py results/evaluation/randwijk_freshnet_model/val_randwijk_freshnet_model_latest.txt
+    deps: 
+    - results/evaluation/randwijk_freshnet_model
+    - src/compute_metrics.py
+    params:
+    - compute_metrics.confidence_threshold
+    outs:
+    - dvclive/val_randwijk_freshnet_model/
+  real_randwijk_papple_metrics:
+    cmd: python3 src/compute_metrics.py results/evaluation/real_randwijk_freshnet_model/val_real_randwijk_freshnet_model_latest.txt
+    deps: 
+    - results/evaluation/real_randwijk_freshnet_model
+    - src/compute_metrics.py
+    params:
+    - compute_metrics.confidence_threshold
+    outs:
+    - dvclive/val_real_randwijk_freshnet_model/
+  randwijk_papple_test:
+    cmd: docker restart freshnet && docker exec -e DVC_CHECKPOINT=$DVC_CHECKPOINT -w $PWD -it freshnet python3
+      $PWD/src/freshnet/tools/test.py $PWD/training_configs/randwijk-ff_stem_direction.py
+      $PWD/models/randwijk_freshnet_model/latest.pth --eval mAP --out $PWD/results/predictions/randwijk_freshnet_model/results.pkl
+    deps:
+    - data_disk/dvc_data/randwijk_papple_splat_split
+    - data_disk/dvc_data/randwijk_papple_splat
+    - models/randwijk_freshnet_model
+    - src/freshnet/tools/test.py
+    params:
+    - training_configs/randwijk-ff_stem_direction.py:
+      - n_points
+      - optimizer_lr
+      - optimizer_weight_decay
+      - work_dir
+      - evaluation_interval
+      - data_root
+      - data_root_processed
+      - data_train_times
+      - runner_max_epochs
+      - bbox_loss_weight
+      - angle_loss_weight
+      - score_thr
+    outs:
+    - results/predictions/randwijk_freshnet_model
+  real_randwijk_papple_test:
+    cmd: docker restart freshnet && docker exec -e DVC_CHECKPOINT=$DVC_CHECKPOINT -w $PWD -it freshnet python3
+      $PWD/src/freshnet/tools/test.py $PWD/training_configs/real_randwijk-ff_stem_direction.py
+      $PWD/models/real_randwijk_freshnet_model/latest.pth --eval mAP --out $PWD/results/predictions/real_randwijk_freshnet_model/results.pkl
+    deps:
+    - data_disk/dvc_data/real_randwijk_papple_split
+    - data_disk/dvc_data/real_randwijk_papple
+    - models/real_randwijk_freshnet_model
+    - src/freshnet/tools/test.py
+    params:
+    - training_configs/real_randwijk-ff_stem_direction.py:
+      - n_points
+      - optimizer_lr
+      - optimizer_weight_decay
+      - work_dir
+      - evaluation_interval
+      - data_root
+      - data_root_processed
+      - data_train_times
+      - runner_max_epochs
+      - bbox_loss_weight
+      - angle_loss_weight
+      - score_thr
+      - test_nms_pre
+      - test_iou_thr
+    outs:
+    - results/predictions/real_randwijk_freshnet_model
+  papple_data_preparation:
+    cmd: docker restart freshnet && docker exec -it freshnet python3 $PWD/src/freshnet/tools/create_data.py papple
+      --root-path $PWD/data_disk/dvc_data/ --out-dir /papple_split --extra-tag papple
+      --workers 24 --split-dir papple_trainval
+    deps:
+    - data_disk/dvc_data/papple_trainval
+    - src/freshnet/tools/create_data.py
+    outs:
+    - data_disk/dvc_data/papple_split
+  papple_train:
+    cmd: docker restart freshnet && docker exec -e DVC_CHECKPOINT=$DVC_CHECKPOINT -w $PWD -it freshnet python3
+      $PWD/src/freshnet/tools/train.py $PWD/training_configs/fresh-ff_stem_direction.py
+    deps:
+    - data_disk/dvc_data/papple_split
+    - data_disk/dvc_data/papple_trainval
+    - src/freshnet/tools/train.py
+    params:
+    - training_configs/fresh-ff_stem_direction.py:
+      - n_points
+      - optimizer_lr
+      - optimizer_weight_decay
+      - work_dir
+      - evaluation_interval
+      - data_root
+      - data_root_processed
+      - data_train_times
+      - runner_max_epochs
+      - bbox_loss_weight
+      - angle_loss_weight
+      - score_thr
+      - test_nms_pre
+      - test_iou_thr
+    outs:
+    - models/freshnet_model
+    - dvclive/freshnet_model
+  papple_test:
+    cmd: docker restart freshnet && docker exec -e DVC_CHECKPOINT=$DVC_CHECKPOINT -w $PWD -it freshnet python3
+      $PWD/src/freshnet/tools/test.py $PWD/training_configs/fresh-ff_stem_direction.py
+      $PWD/models/freshnet_model/latest.pth --eval mAP --out $PWD/results/predictions/freshnet_model/results.pkl
+    deps:
+    - data_disk/dvc_data/papple_split
+    - data_disk/dvc_data/papple_trainval
+    - models/freshnet_model
+    - src/freshnet/tools/test.py
+    params:
+    - training_configs/fresh-ff_stem_direction.py:
+      - n_points
+      - optimizer_lr
+      - optimizer_weight_decay
+      - work_dir
+      - evaluation_interval
+      - data_root
+      - data_root_processed
+      - data_train_times
+      - runner_max_epochs
+      - bbox_loss_weight
+      - angle_loss_weight
+      - score_thr
+      - test_nms_pre
+      - test_iou_thr
+    outs:
+    - results/predictions/freshnet_model
+  papple_visualization:
+    cmd: docker restart freshnet && docker exec -e DVC_CHECKPOINT=$DVC_CHECKPOINT -w $PWD -it freshnet python3
+      $PWD/src/local_visualizer.py $PWD/results/predictions/freshnet_model/results.pkl
+      $PWD/data_disk/dvc_data/papple_split $PWD/data_disk/dvc_data/papple_trainval
+      $PWD/results/visualizations/freshnet_model
+    deps:
+    - results/predictions/freshnet_model
+    - src/local_visualizer.py
+    - data_disk/dvc_data/papple_split
+    - data_disk/dvc_data/papple_trainval
+    params:
+    - local_visualizer.score_threshold
+    outs:
+    - results/visualizations/freshnet_model
+  randwijk_papple_visualization:
+    cmd: docker restart freshnet && docker exec -e DVC_CHECKPOINT=$DVC_CHECKPOINT -w $PWD -it freshnet python3
+      $PWD/src/local_visualizer.py $PWD/results/evaluation/randwijk_freshnet_model/results.pkl
+      $PWD/data_disk/dvc_data/randwijk_papple_splat_split $PWD/data_disk/dvc_data/randwijk_papple_splat
+      $PWD/results/visualizations/randwijk_freshnet_model
+    deps:
+    - results/evaluation/randwijk_freshnet_model
+    - src/local_visualizer.py
+    - data_disk/dvc_data/randwijk_papple_splat_split
+    - data_disk/dvc_data/randwijk_papple_splat
+    params:
+    - local_visualizer.score_threshold
+    outs:
+    - results/visualizations/randwijk_freshnet_model
+  real_randwijk_papple_visualization:
+    cmd: docker restart freshnet && docker exec -e DVC_CHECKPOINT=$DVC_CHECKPOINT -w $PWD -it freshnet python3
+      $PWD/src/local_visualizer.py $PWD/results/evaluation/real_randwijk_freshnet_model/results.pkl
+      $PWD/data_disk/dvc_data/real_randwijk_papple_split $PWD/data_disk/dvc_data/real_randwijk_papple
+      $PWD/results/visualizations/real_randwijk_freshnet_model
+    deps:
+    - results/evaluation/real_randwijk_freshnet_model
+    - src/local_visualizer.py
+    - data_disk/dvc_data/real_randwijk_papple_split
+    - data_disk/dvc_data/real_randwijk_papple
+    params:
+    - local_visualizer.score_threshold
+    outs:
+    - results/visualizations/real_randwijk_freshnet_model
+  combine_real_and_splat_randwijk_data:
+    cmd: python src/combine_real_and_splat_randwijk_data.py data_disk/dvc_data/randwijk_papple_splat data_disk/dvc_data/real_randwijk_papple data_disk/dvc_data/combined_randwijk_papple
+    deps:
+    - data_disk/dvc_data/randwijk_papple_splat
+    - data_disk/dvc_data/real_randwijk_papple
+    - src/combine_real_and_splat_randwijk_data.py
+    params:
+    - convert_randwijk_data_to_fresh.train_trees
+    - combine_real_and_splat_randwijk_data.real_fraction
+    outs:
+    - data_disk/dvc_data/combined_randwijk_papple
+  combined_randwijk_papple_data_preparation:
+    cmd: docker restart freshnet && docker exec -w $PWD -it freshnet python3 $PWD/src/freshnet/tools/create_data.py
+      papple --root-path $PWD/data_disk/dvc_data/ --out-dir /combined_randwijk_papple_split
+      --extra-tag papple --workers 24 --split-dir combined_randwijk_papple
+    deps:
+    - data_disk/dvc_data/combined_randwijk_papple
+    - src/freshnet/tools/create_data.py
+    outs:
+    - data_disk/dvc_data/combined_randwijk_papple_split
+  combined_randwijk_papple_train:
+    cmd: docker restart freshnet && docker exec -e DVC_CHECKPOINT=$DVC_CHECKPOINT -w $PWD -it freshnet python3
+      $PWD/src/freshnet/tools/train.py $PWD/training_configs/combined_randwijk-ff_stem_direction.py
+    deps:
+    - data_disk/dvc_data/combined_randwijk_papple_split
+    - data_disk/dvc_data/combined_randwijk_papple
+    - src/freshnet/tools/train.py
+    params:
+    - training_configs/combined_randwijk-ff_stem_direction.py:
+      - n_points
+      - optimizer_lr
+      - optimizer_weight_decay
+      - work_dir
+      - evaluation_interval
+      - data_root
+      - data_root_processed
+      - data_train_times
+      - runner_max_epochs
+      - bbox_loss_weight
+      - angle_loss_weight
+      - score_thr
+    outs:
+    - models/combined_randwijk_freshnet_model
+    - dvclive/combined_randwijk_freshnet_model
+  combined_randwijk_papple_val_vis:
+    cmd: docker restart freshnet && docker exec -e DVC_CHECKPOINT=$DVC_CHECKPOINT -w $PWD -it freshnet python3
+      $PWD/src/freshnet/tools/val_visible.py $PWD/training_configs/combined_randwijk-ff_stem_direction.py
+      $PWD/models/combined_randwijk_freshnet_model/latest.pth --eval mAP --out $PWD/results/evaluation/combined_randwijk_freshnet_model/results.pkl --test_label_dir $PWD/data_disk/dvc_data/real_randwijk_papple_test_labels
+    deps:
+    - data_disk/dvc_data/combined_randwijk_papple_split
+    - data_disk/dvc_data/combined_randwijk_papple
+    - data_disk/dvc_data/real_randwijk_papple_test_labels
+    - models/combined_randwijk_freshnet_model
+    - src/freshnet/tools/val_visible.py
+    params:
+    - training_configs/combined_randwijk-ff_stem_direction.py:
+      - n_points
+      - optimizer_lr
+      - optimizer_weight_decay
+      - work_dir
+      - evaluation_interval
+      - data_root
+      - data_root_processed
+      - data_train_times
+      - runner_max_epochs
+      - bbox_loss_weight
+      - angle_loss_weight
+      - score_thr
+      - test_nms_pre
+      - test_iou_thr
+      - test_visibility_values
+    outs:
+    - results/evaluation/combined_randwijk_freshnet_model
+  combined_randwijk_papple_metrics:
+    cmd: python3 src/compute_metrics.py results/evaluation/combined_randwijk_freshnet_model/val_combined_randwijk_freshnet_model_latest.txt
+    deps: 
+    - results/evaluation/combined_randwijk_freshnet_model
+    - src/compute_metrics.py
+    params:
+    - compute_metrics.confidence_threshold
+    outs:
+    - dvclive/val_combined_randwijk_freshnet_model/

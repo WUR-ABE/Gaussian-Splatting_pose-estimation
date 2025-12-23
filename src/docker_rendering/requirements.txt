@@ -1,0 +1,9 @@
+numpy
+pandas
+scipy
+jaxtyping
+rich
+dvclive
+ninja
+torch
+open3d
