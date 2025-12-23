@@ -1,0 +1,44 @@
+cff-version: 1.2.0
+message: If you use this software, please cite both the article from preferred-citation and the software itself.
+authors:
+  - family-names: van de Ven
+    given-names: Robert
+    orcid: 'https://orcid.org/0009-0005-6483-6231'
+  - family-names: Bresilla
+    given-names: Trim
+    orcid: 'https://orcid.org/0009-0009-5547-2789'
+  - family-names: Nelissen
+    given-names: Bram
+  - family-names: Nieuwenhuizen
+    given-names: Ard
+    orcid: 'https://orcid.org/0000-0002-8525-8558'
+  - family-names: van Henten
+    given-names: Eldert J.
+    orcid: 'https://orcid.org/0000-0002-1623-9855'
+  - family-names: Kootstra
+    given-names: Gert
+    orcid: 'https://orcid.org/0000-0002-2579-4324'
+title: 'Enhancing annotations for 5D apple pose estimation through 3D Gaussian Splatting (3DGS)'
+version: 1.0.0
+preferred-citation:
+  authors:
+  - family-names: van de Ven
+    given-names: Robert
+    orcid: 'https://orcid.org/0009-0005-6483-6231'
+  - family-names: Bresilla
+    given-names: Trim
+    orcid: 'https://orcid.org/0009-0009-5547-2789'
+  - family-names: Nelissen
+    given-names: Bram
+  - family-names: Nieuwenhuizen
+    given-names: Ard
+    orcid: 'https://orcid.org/0000-0002-8525-8558'
+  - family-names: van Henten
+    given-names: Eldert J.
+    orcid: 'https://orcid.org/0000-0002-1623-9855'
+  - family-names: Kootstra
+    given-names: Gert
+    orcid: 'https://orcid.org/0000-0002-2579-4324'
+  title: 'Enhancing annotations for 5D apple pose estimation through 3D Gaussian Splatting (3DGS)'
+  type: article
+  year: '2026'
