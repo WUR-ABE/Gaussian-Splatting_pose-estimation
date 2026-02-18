@@ -29,7 +29,7 @@ Data is available at https://doi.org/10.4121/976c94f2-028f-4291-adfd-20eb82b0f64
 
     To install gsplat, run this command:
     ```
-    pip install gsplat
+    pip install gsplat==1.5.0
     ```
 
     Perform the setup by calling rasterization with random data. 
